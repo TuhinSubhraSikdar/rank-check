@@ -1,0 +1,11 @@
+Django==5.2.19
+djangorestframework==3.16.1
+celery[redis]==5.7.0
+psycopg[binary]==3.3.9
+requests==2.34.2
+python-dotenv==1.2.4
+gunicorn==23.0.0
+python-dateutil==2.9.0.post0
+pytest==9.2.0
+pytest-django==4.14.0
+ruff==0.17.6

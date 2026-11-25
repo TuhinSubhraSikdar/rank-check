@@ -1,0 +1,15 @@
+{% extends 'base/app.html' %}
+{% block content %}
+<form method="get" class="filters">
+  <label>Project<select name="project"><option value="">All projects</option>{% for project in projects %}<option value="{{ project.id }}" {% if selected_project == project.id|stringformat:'s' %}selected{% endif %}>{{ project.name }}</option>{% endfor %}</select></label>
+  <label>Status<select name="status"><option value="">All statuses</option>{% for value in statuses %}<option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ value }}</option>{% endfor %}</select></label>
+  <label>From<input type="date" name="start" value="{{ start|date:'Y-m-d' }}"></label>
+  <label>To<input type="date" name="end" value="{{ end|date:'Y-m-d' }}"></label>
+  <button class="button secondary">Filter</button>
+</form>
+<section class="panel table-wrap">
+  {% if page %}<table><thead><tr><th>Checked</th><th>Project</th><th>Keyword</th><th>Location</th><th>Device</th><th>Status</th><th>Position</th><th>Change</th><th>Actual depth</th></tr></thead><tbody>
+  {% for item in page %}<tr><td>{{ item.completed_at|date:'Y-m-d H:i'|default:'Queued' }}</td><td>{{ item.configuration.keyword.project.name }}</td><td>{{ item.configuration.keyword.text }}</td><td>{{ item.configuration.location.display_name }}</td><td>{{ item.configuration.get_device_display }}</td><td>{{ item.status }}</td><td>{% if item.result.position %}{{ item.result.position }}{% else %}—{% endif %}</td><td>{% if item.result.movement != None %}{{ item.result.movement }}{% else %}—{% endif %}</td><td>{{ item.actual_checked_depth }}</td></tr>{% endfor %}
+  </tbody></table>{% include 'components/pagination.html' %}{% else %}<div class="empty"><h2>No checks yet</h2><p>Queue a project check to begin recording history.</p></div>{% endif %}
+</section>
+{% endblock %}

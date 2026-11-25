@@ -1,0 +1,1 @@
+{% extends 'base/app.html' %}{% block content %}<section class="panel narrow"><h2>Appearance and report branding</h2><form method="post">{% csrf_token %}{% include 'components/form.html' %}<button class="button">Save settings</button></form><hr><a href="{% url 'password_change' %}">Change password</a></section>{% endblock %}

@@ -1,0 +1,1 @@
+{% extends 'base/app.html' %}{% block subtitle %}<p class="muted">{{ project.name }}</p>{% endblock %}{% block content %}<section class="panel narrow"><form method="post">{% csrf_token %}{% include 'components/form.html' %}<button class="button">Save keyword</button></form></section>{% endblock %}
