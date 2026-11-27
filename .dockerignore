@@ -1,4 +1,5 @@
 .env
+.secrets/
 .venv/
 .git/
 *.sqlite3

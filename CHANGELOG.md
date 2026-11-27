@@ -22,3 +22,16 @@
 - Dispatch confirmed jobs to Celery immediately, warn when the broker is unavailable,
   reject duplicate active project jobs, and pace local pending-check processing.
 - Added the author's GitHub and LinkedIn links to the shared application footer.
+- Added owner-scoped bulk URL index checks with sorted, cleaned input, one paid
+  `site:` search per unique URL, queued/local processing, and a per-URL report.
+  Missing results and provider errors are labeled inconclusive; no live provider
+  request was made for this feature during tests.
+- Added Google Search Console URL Inspection as an administrator-approved,
+  read-only alternative to Serper site search, with separate indexed-status
+  reporting and mocked transport tests.
+- Added standalone URL checks without a project. Serper uses an owned location;
+  Search Console uses an account-approved property. Usage and reports remain
+  owner-scoped, and existing project batches retain their history.
+- Added a quick Serper `site:` check requiring only URLs. It uses US/English
+  search settings, omits city targeting, and labels absent matches as not found
+  in the returned search results.

@@ -12,3 +12,10 @@ defaults to 25 checks and a two-second delay between requests. Use
 applies before each pending check is claimed. Worker concurrency and rate are
 bounded by deployment configuration; ambiguous billable failures are not
 retried automatically.
+
+URL index batches use `dispatch_pending_index_checks` and `run_index_check`.
+The task selects either the Serper site-search adapter or Search Console URL
+Inspection from the immutable batch method. Without Redis, run
+`.venv/bin/python manage.py run_pending_index_checks --batch ID` after
+confirming the batch; this command checks the relevant provider configuration
+before processing any pending attempt.

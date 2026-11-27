@@ -39,11 +39,14 @@ class SerperProvider(BaseSERPProvider):
         request_id = str(uuid.uuid4())
         payload = {
             "q": keyword,
-            "location": location.provider_location_name or location.display_name,
-            "gl": location.country.google_country_code,
+            "gl": location.country.google_country_code if location else "us",
             "hl": language,
             "num": 10,
         }
+        if location:
+            payload["location"] = location.provider_location_name or location.display_name
+        location_name = location.display_name if location else "United States (no city)"
+        country_code = location.country.iso_code if location else "US"
         started = time.monotonic()
         metadata = {"request_id": request_id, "endpoint": self.base_url, "page": 1, "requested_results": 10}
         try:
@@ -54,26 +57,26 @@ class SerperProvider(BaseSERPProvider):
                 timeout=self.timeout,
             )
         except requests.Timeout:
-            return self._error(SearchStatus.TIMEOUT, keyword, location, language, metadata, started, "Provider request timed out.")
+            return self._error(SearchStatus.TIMEOUT, keyword, location_name, country_code, language, metadata, started, "Provider request timed out.")
         except requests.RequestException as exc:
-            return self._error(SearchStatus.API_ERROR, keyword, location, language, metadata, started, f"Provider transport error: {exc.__class__.__name__}.")
+            return self._error(SearchStatus.API_ERROR, keyword, location_name, country_code, language, metadata, started, f"Provider transport error: {exc.__class__.__name__}.")
         metadata = {**metadata, "http_status": response.status_code, "duration_ms": round((time.monotonic() - started) * 1000)}
         if response.status_code >= 400:
-            return SearchResult(keyword=keyword, location=location.display_name, country=location.country.iso_code, language=language, status=SearchStatus.API_ERROR, request_metadata=metadata, error_message="Provider rejected the request.")
+            return SearchResult(keyword=keyword, location=location_name, country=country_code, language=language, status=SearchStatus.API_ERROR, request_metadata=metadata, error_message="Provider rejected the request.")
         try:
             data = response.json()
         except ValueError:
-            return SearchResult(keyword=keyword, location=location.display_name, country=location.country.iso_code, language=language, status=SearchStatus.INVALID_RESPONSE, request_metadata=metadata, error_message="Provider returned non-JSON content.")
+            return SearchResult(keyword=keyword, location=location_name, country=country_code, language=language, status=SearchStatus.INVALID_RESPONSE, request_metadata=metadata, error_message="Provider returned non-JSON content.")
         organic = data.get("organic") if isinstance(data, dict) else None
         if not isinstance(organic, list):
-            return SearchResult(keyword=keyword, location=location.display_name, country=location.country.iso_code, language=language, status=SearchStatus.INVALID_RESPONSE, request_metadata=metadata, error_message="Provider response has no organic result list.")
+            return SearchResult(keyword=keyword, location=location_name, country=country_code, language=language, status=SearchStatus.INVALID_RESPONSE, request_metadata=metadata, error_message="Provider response has no organic result list.")
         normalized = []
         for item in organic:
             if not isinstance(item, dict) or not isinstance(item.get("position"), int) or not isinstance(item.get("link"), str):
-                return SearchResult(keyword=keyword, location=location.display_name, country=location.country.iso_code, language=language, status=SearchStatus.INVALID_RESPONSE, request_metadata=metadata, error_message="Organic result fields are invalid.")
+                return SearchResult(keyword=keyword, location=location_name, country=country_code, language=language, status=SearchStatus.INVALID_RESPONSE, request_metadata=metadata, error_message="Organic result fields are invalid.")
             position = item["position"]
             if position < 1:
-                return SearchResult(keyword=keyword, location=location.display_name, country=location.country.iso_code, language=language, status=SearchStatus.INVALID_RESPONSE, request_metadata=metadata, error_message="Organic position must be positive.")
+                return SearchResult(keyword=keyword, location=location_name, country=country_code, language=language, status=SearchStatus.INVALID_RESPONSE, request_metadata=metadata, error_message="Organic position must be positive.")
             normalized.append(OrganicResult(position=position, title=str(item.get("title", "")), link=item["link"], snippet=str(item.get("snippet", ""))))
         normalized.sort(key=lambda result: result.position)
         contiguous_depth = 0
@@ -83,8 +86,8 @@ class SerperProvider(BaseSERPProvider):
             elif result.position > contiguous_depth + 1:
                 break
         status = SearchStatus.SUCCESS if contiguous_depth >= depth else SearchStatus.INCOMPLETE
-        return SearchResult(keyword=keyword, location=location.display_name, country=location.country.iso_code, language=language, organic_results=tuple(normalized), status=status, actual_checked_depth=contiguous_depth, request_metadata=metadata)
+        return SearchResult(keyword=keyword, location=location_name, country=country_code, language=language, organic_results=tuple(normalized), status=status, actual_checked_depth=contiguous_depth, request_metadata=metadata)
 
     @staticmethod
-    def _error(status, keyword, location, language, metadata, started, message):
-        return SearchResult(keyword=keyword, location=location.display_name, country=location.country.iso_code, language=language, status=status, request_metadata={**metadata, "duration_ms": round((time.monotonic() - started) * 1000)}, error_message=message)
+    def _error(status, keyword, location_name, country_code, language, metadata, started, message):
+        return SearchResult(keyword=keyword, location=location_name, country=country_code, language=language, status=status, request_metadata={**metadata, "duration_ms": round((time.monotonic() - started) * 1000)}, error_message=message)

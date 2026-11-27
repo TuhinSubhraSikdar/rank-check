@@ -76,3 +76,89 @@ class RankingResult(models.Model):
         if self.pk:
             raise ValidationError("Historical ranking results are immutable.")
         super().save(*args, **kwargs)
+
+
+class IndexBatch(TimestampedModel):
+    class Method(models.TextChoices):
+        SERPER = "SERPER", "Serper site search"
+        SEARCH_CONSOLE = "GSC", "Google Search Console"
+
+    owner = models.ForeignKey("accounts.User", on_delete=models.PROTECT, related_name="index_batches")
+    project = models.ForeignKey("projects.Project", on_delete=models.PROTECT, related_name="index_batches", null=True, blank=True)
+    location = models.ForeignKey("locations.Location", on_delete=models.PROTECT, null=True, blank=True)
+    method = models.CharField(max_length=6, choices=Method.choices, default=Method.SERPER)
+    site_url = models.CharField(max_length=500, blank=True)
+    status = models.CharField(max_length=20, default="PENDING")
+    total = models.PositiveSmallIntegerField()
+    completed = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [models.Index(fields=("owner", "created_at"))]
+
+
+class IndexCheck(TimestampedModel):
+    batch = models.ForeignKey(IndexBatch, on_delete=models.PROTECT, related_name="checks")
+    url = models.URLField(max_length=1000)
+    status = models.CharField(max_length=30, default="PENDING")
+    matched_url = models.URLField(max_length=1000, blank=True)
+    verdict = models.CharField(max_length=30, blank=True)
+    coverage_state = models.CharField(max_length=500, blank=True)
+    google_canonical = models.URLField(max_length=1000, blank=True)
+    last_crawl_time = models.DateTimeField(null=True, blank=True)
+    request_identifier = models.UUIDField(null=True, blank=True, unique=True)
+    error_message = models.CharField(max_length=500, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("url",)
+        constraints = [models.UniqueConstraint(fields=("batch", "url"), name="index_batch_url_uniq")]
+        indexes = [models.Index(fields=("status", "created_at"))]
+
+
+class SearchConsoleGrant(TimestampedModel):
+    """Admin-approved Search Console property for one project or account."""
+
+    project = models.OneToOneField("projects.Project", on_delete=models.PROTECT, related_name="search_console_grant", null=True, blank=True)
+    owner = models.ForeignKey("accounts.User", on_delete=models.PROTECT, related_name="search_console_grants", null=True, blank=True)
+    site_url = models.CharField(max_length=500)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [models.CheckConstraint(
+            condition=(models.Q(project__isnull=False, owner__isnull=True) | models.Q(project__isnull=True, owner__isnull=False)),
+            name="gsc_grant_project_xor_owner",
+        )]
+
+    def clean(self):
+        from .engine import domain_matches
+        from .search_console import property_covers_url
+
+        if bool(self.project_id) == bool(self.owner_id):
+            raise ValidationError("Choose exactly one project or account for the Search Console grant.")
+        if self.project_id:
+            project = self.project
+            if self.site_url.startswith("sc-domain:"):
+                valid = property_covers_url(self.site_url, f"https://{project.root_domain}/")
+            else:
+                valid = property_covers_url(self.site_url, self.site_url) and domain_matches(
+                    self.site_url, project.root_domain, project.match_subdomains
+                )
+            if not valid:
+                raise ValidationError({"site_url": "Enter a Search Console property within this project's domain."})
+        elif self.site_url.startswith("sc-domain:"):
+            domain = self.site_url.removeprefix("sc-domain:")
+            valid = property_covers_url(self.site_url, f"https://{domain}/") and not any(
+                character in domain for character in "/?#@: "
+            )
+            if not valid:
+                raise ValidationError({"site_url": "Enter a valid Search Console domain property."})
+        elif not property_covers_url(self.site_url, self.site_url):
+            raise ValidationError({"site_url": "Enter a URL-prefix property ending in / or a sc-domain property."})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.site_url

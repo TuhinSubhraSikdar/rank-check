@@ -23,7 +23,7 @@ services:
     depends_on:
       db: {condition: service_healthy}
       redis: {condition: service_started}
-    volumes: [static_data:/app/staticfiles, media_data:/app/media]
+    volumes: [static_data:/app/staticfiles, media_data:/app/media, ./.secrets:/run/gsc:ro]
   worker:
     build: .
     command: celery -A config worker --loglevel=INFO --concurrency=1
@@ -36,6 +36,7 @@ services:
     depends_on:
       db: {condition: service_healthy}
       redis: {condition: service_started}
+    volumes: [./.secrets:/run/gsc:ro]
   beat:
     build: .
     command: celery -A config beat --loglevel=INFO

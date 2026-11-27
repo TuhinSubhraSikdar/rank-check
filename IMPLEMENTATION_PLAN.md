@@ -17,6 +17,10 @@ remain BLOCKED without inventing support. Tests use mocked HTTP only.
 | 8 Automation | Celery/Redis; project schedules/time zones; progress/cancel/retry; quotas; bounded batch dispatch | IN PROGRESS | Queue, schedule ownership and unavailable-broker regression tests pass; broker integration untested | Worker/beat and schedule UI added; immediate dispatch on confirmation; local dispatcher paced; robust rate limiting pending |
 | 9 Competitors | Owned competitor CRUD; extraction from same response; position and overlap views | IN PROGRESS | Same-response extraction and ownership test passes | CRUD and observations added; overlap/comparison views pending |
 | 10 Production readiness | Security review; tests/lint/migrations; Docker/Gunicorn/Nginx; operations and documentation audit | IN PROGRESS | SQLite tests pass; Docker/PG/Redis integration pending | Container files added; TLS and backup operations pending |
+| URL index checks | Paste, clean, sort and deduplicate project URLs; queue one paid `site:` query per unique URL; report exact matches and inconclusive outcomes | COMPLETED | Mocked provider, tenant, quota and URL matching tests pass; live provider behavior unverified | UI and limitations documented |
+| Search Console inspection | Admin-approved project property; service-account authentication; owner-scoped URL Inspection batches; indexed-version verdicts and history | IN PROGRESS | Mocked Google transport, property boundary, quota, tenancy and reporting tests pass; live property check pending | Setup, security and API limitations documented |
+| Standalone URL checks | Optional project on URL batches and usage; owned Serper location or account-approved Search Console property; scoped reports | COMPLETED | Mocked standalone provider and tenant tests pass; live providers unverified | Form, setup and ownership documentation updated |
+| Quick URL search check | URL-only Serper `site:` queue; US/English search defaults; exact-match report wording; owner quota and history | COMPLETED | Mocked unlocated request, timeout, queue and private report tests pass; live request unverified | Quick check guide and Serper semantics updated |
 
 ## Provider verification gates
 - Verify request endpoint, authentication, country, language and location syntax.
@@ -44,3 +48,21 @@ remain BLOCKED without inventing support. Tests use mocked HTTP only.
   theme added. Production checks and Compose syntax validated with dummy secrets.
 - 2026-11-25: shared footer updated with GitHub and LinkedIn profile links;
   verified with Django system checks and template rendering.
+- 2026-11-26: owner-scoped URL index batches, worker/local processing and per-URL
+  reports added. A missing `site:` result is reported as not confirmed, not as
+  proof of non-indexing. SQLite unit tests and Django checks pass; no live
+  provider request was made for this feature.
+- 2026-11-27: Search Console URL Inspection added with admin-approved property
+  grants and separate result semantics. Migration applied locally; 48 SQLite
+  tests, Ruff, Django checks and migration drift check pass. No real Search
+  Console credentials or verified property were available. Docker Compose
+  validation remains blocked by the local Snap runtime restriction.
+- 2026-11-27: standalone Serper and Search Console URL batches added with owner
+  location/property selection, nullable project usage and revocation checks.
+  Migrations applied locally; project history preserved. 52 SQLite tests,
+  Ruff, Django checks and migration drift check pass. Live provider and
+  PostgreSQL/Redis integration remain unverified.
+- 2026-11-27: quick URL-only Serper flow added with US/English search targeting,
+  no project or saved location, and exact-result reporting. 55 SQLite tests,
+  Ruff, Django checks and migration drift check pass. No paid request was made
+  for this flow.

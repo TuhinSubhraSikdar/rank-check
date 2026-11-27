@@ -12,8 +12,10 @@ from apps.scheduling.services import cancel_job, estimate_job, queue_job
 from apps.scheduling.tasks import dispatch_pending
 
 from .forms import KeywordLocationForm
-from .models import RankCheck
+from .indexing import IndexBatchForm, QuickIndexForm, queue_index_batch, queue_search_console_batch
+from .models import IndexBatch, RankCheck
 from .services import owned_configurations, save_configuration
+from .tasks import dispatch_pending_index_checks
 
 
 @login_required
@@ -87,3 +89,54 @@ def history(request):
         queryset = queryset.filter(created_at__date__lte=end)
     page = Paginator(queryset, 50).get_page(request.GET.get("page"))
     return render(request, "ranktracker/history.html", {"title": "Ranking history", "page": page, "projects": owned_projects(request.user), "selected_project": project_id, "status": status, "statuses": ("SUCCESS", "NOT_FOUND", "INCOMPLETE", "API_ERROR", "TIMEOUT", "INVALID_RESPONSE"), "start": start, "end": end})
+
+
+@login_required
+def index_batches(request):
+    batches = IndexBatch.objects.filter(owner=request.user).select_related("project")[:30]
+    return render(request, "ranktracker/index_batches.html", {"title": "URL index checks", "batches": batches})
+
+
+def _dispatch_index_batch(request):
+    if not getattr(settings, "CELERY_TASK_ALWAYS_EAGER", False):
+        try:
+            dispatch_pending_index_checks.delay()
+        except Exception:
+            messages.warning(request, "Batch saved, but the task broker is unavailable. Run the local processing command shown on the report page.")
+
+
+@login_required
+def quick_index_create(request):
+    form = QuickIndexForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            batch = queue_index_batch(actor=request.user, urls=form.cleaned_data["urls"])
+        except ValidationError as exc:
+            form.add_error(None, exc)
+        else:
+            _dispatch_index_batch(request)
+            return redirect("ranktracker:index_batch", batch_id=batch.id)
+    return render(request, "ranktracker/index_quick.html", {"title": "Quick URL search check", "form": form})
+
+
+@login_required
+def index_batch_create(request):
+    form = IndexBatchForm(request.POST or None, actor=request.user)
+    if request.method == "POST" and form.is_valid():
+        try:
+            if form.cleaned_data["method"] == IndexBatch.Method.SEARCH_CONSOLE:
+                batch = queue_search_console_batch(actor=request.user, project=form.cleaned_data["project"], grant=form.cleaned_data["gsc_property"], urls=form.cleaned_data["cleaned_urls"])
+            else:
+                batch = queue_index_batch(actor=request.user, project=form.cleaned_data["project"], location=form.cleaned_data["location"], urls=form.cleaned_data["cleaned_urls"])
+        except ValidationError as exc:
+            form.add_error(None, exc)
+        else:
+            _dispatch_index_batch(request)
+            return redirect("ranktracker:index_batch", batch_id=batch.id)
+    return render(request, "ranktracker/index_form.html", {"title": "Check URLs", "form": form})
+
+
+@login_required
+def index_batch_detail(request, batch_id):
+    batch = get_object_or_404(IndexBatch.objects.filter(owner=request.user).select_related("project", "location"), pk=batch_id)
+    return render(request, "ranktracker/index_batch.html", {"title": "URL index report", "batch": batch, "checks": batch.checks.all()})

@@ -67,6 +67,21 @@ Reports creates owner-only, standalone HTML and UTF-8 CSV snapshots. Schedules
 can be configured per project. The API key is never sent to the browser. The
 light/dark appearance setting is under **Settings** and is saved per user.
 
+**URL index checks** accepts up to 25 URLs per batch, with or without a project.
+For the simplest flow, open **URL index checks → Quick URL search check** and paste
+URLs. It sends Serper `site:` searches using US/English settings without a
+project or location. The report says **Found in search** or **Not found in
+search**; absence does not prove non-indexing. The advanced form still lets
+you choose a project or an optional owned location for Serper. Selecting a
+project uses its default location and limits URLs to its domain.
+Google Search Console checks need an administrator-approved property for your
+account (standalone) or project. They show Google's reported indexed-version
+status, coverage, canonical and last crawl information. Follow
+[the setup guide](docs/SEARCH_CONSOLE_INDEXING.md). Serper site search checks
+whether an exact URL appears in `site:` results and uses one paid request per
+URL. If Redis/Celery is unavailable, process a confirmed batch with
+`.venv/bin/python manage.py run_pending_index_checks --batch ID`.
+
 Run local verification with:
 
 ```bash

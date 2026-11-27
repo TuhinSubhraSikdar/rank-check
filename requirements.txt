@@ -3,6 +3,7 @@ djangorestframework==3.16.1
 celery[redis]==5.7.0
 psycopg[binary]==3.3.9
 requests==2.34.2
+google-auth==2.63.1
 python-dotenv==1.2.4
 gunicorn==23.0.0
 python-dateutil==2.9.0.post0

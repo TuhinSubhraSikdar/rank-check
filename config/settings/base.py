@@ -83,10 +83,14 @@ CELERY_TASK_TIME_LIMIT = 120
 CELERY_BEAT_SCHEDULE = {
     "dispatch-due-projects": {"task": "apps.scheduling.tasks.dispatch_due", "schedule": 60.0},
     "dispatch-pending-checks": {"task": "apps.scheduling.tasks.dispatch_pending", "schedule": 15.0},
+    "dispatch-pending-index-checks": {"task": "apps.ranktracker.tasks.dispatch_pending_index_checks", "schedule": 15.0},
 }
 SERPER_API_KEY = os.getenv("SERPER_API_KEY", "")
 SERPER_BASE_URL = os.getenv("SERPER_BASE_URL", "https://google.serper.dev/search")
 SERPER_TIMEOUT = int(os.getenv("SERPER_TIMEOUT", "20"))
+GSC_SERVICE_ACCOUNT_FILE = os.getenv("GSC_SERVICE_ACCOUNT_FILE", "")
+GSC_TIMEOUT = int(os.getenv("GSC_TIMEOUT", "20"))
+GSC_DAILY_PROPERTY_LIMIT = int(os.getenv("GSC_DAILY_PROPERTY_LIMIT", "2000"))
 RANK_BATCH_SIZE = int(os.getenv("RANK_BATCH_SIZE", "25"))
 RANK_RATE_LIMIT = os.getenv("RANK_RATE_LIMIT", "30/m")
 LARGE_JOB_THRESHOLD = int(os.getenv("LARGE_JOB_THRESHOLD", "100"))

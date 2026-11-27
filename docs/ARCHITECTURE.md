@@ -15,6 +15,7 @@ read APIs, and domain services own validation and transactional writes.
 | keywords | Normalized keyword uniqueness, import and archive |
 | locations | Country catalog and tenant-owned geographical targeting |
 | ranktracker | Tracking configurations, jobs, attempts, immutable observations and matching |
+| ranktracker URL checks | Owner-scoped URL batches and attempts using Serper site search or Google Search Console URL Inspection; methods have distinct status meanings |
 | serp_providers | Capability-aware provider adapters and normalization |
 | dashboard | Scoped selectors, metrics and chart payloads |
 | reports | Immutable report snapshots, safe CSV and standalone HTML |
@@ -30,6 +31,20 @@ claim attempts transactionally, reserve quota, call a provider outside a
 database transaction, then atomically persist observations and completion.
 No view performs bulk external requests. Results are append-only. Failed
 attempts remain visible without replacing the latest valid observation.
+
+URL check batches belong directly to an account and may optionally retain a
+project. Serper batches optionally retain a selected owned location; without
+one, the quick flow uses US/English request settings. Each unique cleaned
+URL has one attempt;
+the batch and attempt rows are preserved as history. The worker queries
+`site:<URL>` through Serper without fetching the submitted URL. A matching
+organic URL is "found"; absence is "not confirmed" because `site:` results are
+not an exhaustive index inventory. Provider errors are inconclusive.
+Search Console batches use an administrator-approved property grant for one
+project or account and a deployment-owned read-only service account. The grant and URL
+scope are checked before queuing. Google credentials are never stored in the
+database, sent to the browser or read from user input. Indexed-version verdicts
+are kept separate from Serper search-result signals.
 
 ## Data integrity and tenancy
 Project.owner is the tenant boundary. Keyword, configuration, jobs, history,

@@ -38,6 +38,27 @@ def test_serper_request_and_normalization(location):
     assert "secret" not in str(result.request_metadata)
 
 
+def test_serper_site_search_without_location_uses_us_english_defaults():
+    session = Mock()
+    session.post.return_value = response(payload={"organic": []})
+    provider = SerperProvider(api_key="secret", session=session)
+    result = provider.search(
+        keyword="site:https://example.com/page", location=None,
+        language="en", device="DEFAULT", depth=10,
+    )
+    assert session.post.call_args.kwargs["json"] == {
+        "q": "site:https://example.com/page", "gl": "us", "hl": "en", "num": 10,
+    }
+    assert result.status == SearchStatus.INCOMPLETE
+    assert result.country == "US"
+    assert result.location == "United States (no city)"
+    session.post.side_effect = requests.Timeout()
+    assert provider.search(
+        keyword="site:https://example.com/page", location=None,
+        language="en", device="DEFAULT", depth=10,
+    ).status == SearchStatus.TIMEOUT
+
+
 def test_serper_incomplete_and_invalid_response(location):
     session = Mock()
     session.post.return_value = response(payload={"organic": [{"position": 1, "link": "https://a.example"}, {"position": 3, "link": "https://c.example"}]})

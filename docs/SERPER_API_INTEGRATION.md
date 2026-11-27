@@ -15,3 +15,10 @@ pages have not been verified. Desktop/mobile execution is rejected because the
 playground exposes no Search device parameter. Tests mock HTTP and consume no
 credits. Metadata includes endpoint, page, duration and response status, never
 the API key or provider response body.
+
+Quick URL checks use the same Search endpoint with `q=site:<URL>`, `gl=us`,
+`hl=en`, and `num=10`, omitting the city-level `location` field. The returned
+organic links are compared with the submitted URL. An absent exact match is
+reported only as **Not found in search**, because a `site:` query is not an
+exhaustive index inventory. This unlocated request is covered by mocked tests;
+no paid provider call was made for this change.

@@ -6,7 +6,7 @@ from apps.core.models import TimestampedModel
 
 class APIUsage(TimestampedModel):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="api_usage")
-    project = models.ForeignKey("projects.Project", on_delete=models.PROTECT, related_name="api_usage")
+    project = models.ForeignKey("projects.Project", on_delete=models.PROTECT, related_name="api_usage", null=True, blank=True)
     provider = models.CharField(max_length=50)
     request_identifier = models.UUIDField(unique=True)
     status = models.CharField(max_length=30)

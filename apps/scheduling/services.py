@@ -35,11 +35,16 @@ def queue_job(*, actor, project):
     if not count:
         raise ValidationError("Add an active provider-default Top 10 configuration first.")
     month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    from apps.ranktracker.models import IndexBatch, IndexCheck
     from apps.usage.models import APIUsage
 
-    used = APIUsage.objects.filter(user=actor, created_at__gte=month_start).count()
+    used = APIUsage.objects.filter(user=actor, provider="serper", created_at__gte=month_start).count()
     pending = RankCheck.objects.filter(configuration__keyword__project__owner=actor, status__in=("PENDING", "QUEUED", "RUNNING")).count()
-    if used + pending + count > actor.monthly_request_quota:
+    pending += IndexCheck.objects.filter(batch__owner=actor, batch__method=IndexBatch.Method.SERPER, status__in=("PENDING", "QUEUED", "RUNNING")).count()
+    from apps.ranktracker.models import IndexCheck
+
+    pending_index = IndexCheck.objects.filter(batch__owner=actor, status__in=("PENDING", "QUEUED", "RUNNING")).count()
+    if used + pending + pending_index + count > actor.monthly_request_quota:
         raise ValidationError("Monthly API request quota would be exceeded.")
     job = RankJob.objects.create(owner=actor, project=project, total=count)
     RankCheck.objects.bulk_create([RankCheck(job=job, configuration=config, requested_depth=10) for config in eligible_configurations(project).iterator(chunk_size=settings.RANK_BATCH_SIZE)])

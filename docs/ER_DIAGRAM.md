@@ -21,4 +21,10 @@ erDiagram
  RankCheck ||--o| APIUsage : consumes
  Project ||--o{ TrackingSchedule : schedules
  Project ||--o{ Report : snapshots
+ Project ||--o| SearchConsoleGrant : approves
+ User ||--o{ SearchConsoleGrant : approves
+ User ||--o{ IndexBatch : owns
+ Project ||--o{ IndexBatch : optionally_checks
+ Location ||--o{ IndexBatch : targets
+ IndexBatch ||--o{ IndexCheck : contains
 ```

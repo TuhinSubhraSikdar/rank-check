@@ -1,0 +1,10 @@
+{% extends 'base/app.html' %}
+{% block actions %}<a class="button secondary" href="{% url 'ranktracker:index_batches' %}">All URL reports</a>{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <h2>Search for URLs with Serper</h2>
+  <p>Paste URLs below. No project or location is needed. Each unique URL sends one paid Google search request through Serper using US/English settings.</p>
+  <p>If an exact URL appears in the returned <code>site:</code> results, the report says “Found in search.” If it does not appear, the report says “Not found in search.” That absence does not prove the URL is not indexed.</p>
+  <form method="post">{% csrf_token %}{% include 'components/form.html' %}<button class="button" type="submit">Confirm and queue URL checks</button></form>
+</section>
+{% endblock %}

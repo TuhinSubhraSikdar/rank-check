@@ -1,0 +1,10 @@
+{% extends 'base/app.html' %}
+{% block content %}
+<section class="panel narrow">
+  <p>Paste one URL per line, up to 25. URLs are cleaned and duplicates removed.</p>
+  <p><strong>Without a project:</strong> leave Project on “No project”. A Serper site search uses US/English settings by default; optionally choose one of your locations. For a Google inspection, choose an administrator-approved Search Console property.</p>
+  <p><strong>With a project:</strong> Serper uses the project's default location; Google uses its approved Search Console property. Only URLs within that project are accepted.</p>
+  <p>Google Search Console reports the indexed version, not a live test. Serper checks whether an exact URL appears in <code>site:</code> results; absence does not prove the URL is not indexed. Serper sends one paid request per URL.</p>
+  <form method="post">{% csrf_token %}{% include 'components/form.html' %}<button class="button" type="submit">Confirm and queue URL checks</button></form>
+</section>
+{% endblock %}

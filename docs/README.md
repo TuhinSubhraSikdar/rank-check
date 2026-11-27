@@ -30,6 +30,8 @@ Read [the implementation plan](../IMPLEMENTATION_PLAN.md) for current status.
 - [Roadmap](ROADMAP.md)
 - [Scheduling](SCHEDULING.md)
 - [Security Guide](SECURITY_GUIDE.md)
+- [Search Console Indexing](SEARCH_CONSOLE_INDEXING.md)
+- [URL Index Checks](URL_INDEX_CHECKS.md)
 - [Serper Api Integration](SERPER_API_INTEGRATION.md)
 - [Serp Provider Architecture](SERP_PROVIDER_ARCHITECTURE.md)
 - [Tech Stack](TECH_STACK.md)
